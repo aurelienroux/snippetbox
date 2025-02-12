@@ -59,7 +59,7 @@ func (m *SnippetModel) Get(id int) (Snippet, error) {
 }
 
 // This will return the 10 most recently created snippets
-func (m *SnippetModel) Lastest() ([]Snippet, error) {
+func (m *SnippetModel) Latest() ([]Snippet, error) {
 	stmt := `SELECT id, title, content, created, expires FROM snippets
 	WHERE expires > UTC_TIMESTAMP()	ORDER BY id DESC LIMIT 10`
 	var snippets []Snippet
