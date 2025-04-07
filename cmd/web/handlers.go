@@ -10,13 +10,6 @@ import (
 	"github.com/aurelienroux/snippetbox/internal/validator"
 )
 
-type SnippetCreateForm struct {
-	Title               string `form:"title"`
-	Content             string `form:"content"`
-	Expires             int    `form:"expires"`
-	validator.Validator `form:"-"`
-}
-
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	snippets, err := app.snippets.Latest()
 	if err != nil {
@@ -62,6 +55,13 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, http.StatusOK, "create.tmpl", data)
 }
 
+type SnippetCreateForm struct {
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
+}
+
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	var form SnippetCreateForm
 
@@ -94,11 +94,42 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "user sign up")
+	data := app.newTemplateData(r)
+	data.Form = UserSignUpForm{}
+	app.render(w, r, http.StatusOK, "signup.tmpl", data)
+}
+
+type UserSignUpForm struct {
+	Name                string `form:"name"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"-"`
 }
 
 func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("user sign up post")
+	var form UserSignUpForm
+
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form.CheckField(validator.NotBlank(form.Name), "name", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, *validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl", data)
+		return
+	}
+
+	fmt.Fprintln(w, "create a user")
+
 }
 
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
