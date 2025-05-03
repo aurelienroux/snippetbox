@@ -1,6 +1,6 @@
 module github.com/aurelienroux/snippetbox
 
-go 1.23.1
+go 1.24.2
 
 require (
 	github.com/go-sql-driver/mysql v1.8.1
